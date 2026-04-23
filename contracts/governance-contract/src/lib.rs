@@ -151,7 +151,11 @@ impl GovernanceContract {
             .unwrap_or(0)
     }
 
-    pub fn delegate_votes(env: Env, delegator: Address, delegate: Address) -> Result<(), GovernanceError> {
+    pub fn delegate_votes(
+        env: Env,
+        delegator: Address,
+        delegate: Address,
+    ) -> Result<(), GovernanceError> {
         delegator.require_auth();
 
         if delegator == delegate {
@@ -190,9 +194,7 @@ impl GovernanceContract {
             });
         }
 
-        env.storage()
-            .instance()
-            .set(&history_key, &history);
+        env.storage().instance().set(&history_key, &history);
 
         env.storage()
             .instance()
@@ -200,10 +202,8 @@ impl GovernanceContract {
 
         Self::add_to_delegators(&env, &delegate, &delegator);
 
-        env.events().publish(
-            ("VotesDelegated", delegator.clone(), delegate.clone()),
-            (),
-        );
+        env.events()
+            .publish(("VotesDelegated", delegator.clone(), delegate.clone()), ());
 
         Ok(())
     }
@@ -221,7 +221,9 @@ impl GovernanceContract {
 
         Self::remove_from_delegators(&env, &delegate, &delegator);
 
-        env.storage().instance().remove(&DataKey::Delegation(delegator.clone()));
+        env.storage()
+            .instance()
+            .remove(&DataKey::Delegation(delegator.clone()));
 
         let history_key = DataKey::DelegationHistory;
         let mut history: Vec<DelegationRecord> = env
@@ -238,9 +240,7 @@ impl GovernanceContract {
             action: DelegationAction::Undelegated,
         });
 
-        env.storage()
-            .instance()
-            .set(&history_key, &history);
+        env.storage().instance().set(&history_key, &history);
 
         env.events().publish(("VotesUndelegated", delegator), ());
 
@@ -287,7 +287,12 @@ impl GovernanceContract {
             .unwrap_or_else(|| Vec::new(&env))
     }
 
-    pub fn vote(env: Env, voter: Address, proposal_id: u32, vote_weight: i128) -> Result<(), GovernanceError> {
+    pub fn vote(
+        env: Env,
+        voter: Address,
+        proposal_id: u32,
+        vote_weight: i128,
+    ) -> Result<(), GovernanceError> {
         voter.require_auth();
 
         let delegate_of_voter = Self::get_delegate(env.clone(), voter.clone());
@@ -311,9 +316,7 @@ impl GovernanceContract {
             return Err(GovernanceError::AlreadyVoted);
         }
 
-        env.storage()
-            .instance()
-            .set(&vote_key, &vote_weight);
+        env.storage().instance().set(&vote_key, &vote_weight);
 
         let mut proposal_votes: i128 = env
             .storage()
@@ -343,7 +346,11 @@ impl GovernanceContract {
             .has(&DataKey::Vote(voter, proposal_id))
     }
 
-    fn check_circular_delegation(env: &Env, delegator: &Address, proposed_delegate: &Address) -> bool {
+    fn check_circular_delegation(
+        env: &Env,
+        delegator: &Address,
+        proposed_delegate: &Address,
+    ) -> bool {
         let mut current = proposed_delegate.clone();
 
         let mut visited: Vec<Address> = Vec::new(env);
